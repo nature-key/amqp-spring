@@ -1,33 +1,34 @@
 package com.jiepi.amqpspring;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.support.ConsumerTagStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.UUID;
 
 @Configuration
 @ComponentScan({"com.jiepi.*"})
 public class RabbitmqConfig {
 
     @Bean
-    public ConnectionFactory connectionFactory(){
+    public ConnectionFactory connectionFactory() {
         CachingConnectionFactory cachingConnectionFactory = new CachingConnectionFactory();
         cachingConnectionFactory.setVirtualHost("/");
         cachingConnectionFactory.setAddresses("127.0.0.1:5672");
         cachingConnectionFactory.setPassword("guest");
         cachingConnectionFactory.setUsername("guest");
-        return  cachingConnectionFactory;
+        return cachingConnectionFactory;
     }
 
     @Bean
-    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory){
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         RabbitAdmin rabbitAdmin = new RabbitAdmin(connectionFactory);
         rabbitAdmin.setAutoStartup(true);
         return rabbitAdmin;
@@ -37,10 +38,10 @@ public class RabbitmqConfig {
      * 针对消费者配置
      * 1. 设置交换机类型
      * 2. 将队列绑定到交换机
-     FanoutExchange: 将消息分发到所有的绑定队列，无routingkey的概念
-     HeadersExchange ：通过添加属性key-value匹配
-     DirectExchange:按照routingkey分发到指定队列
-     TopicExchange:多关键字匹配
+     * FanoutExchange: 将消息分发到所有的绑定队列，无routingkey的概念
+     * HeadersExchange ：通过添加属性key-value匹配
+     * DirectExchange:按照routingkey分发到指定队列
+     * TopicExchange:多关键字匹配
      */
     @Bean
     public TopicExchange exchange001() {
@@ -94,8 +95,34 @@ public class RabbitmqConfig {
 
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory){
-        RabbitTemplate rabbitTemplate= new RabbitTemplate(connectionFactory);
-        return  rabbitTemplate;
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        return rabbitTemplate;
+    }
+
+
+    @Bean
+    public SimpleMessageListenerContainer simpleMessageListenerContainer(ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer simpleMessageListenerContainer = new SimpleMessageListenerContainer(connectionFactory);
+        simpleMessageListenerContainer.setQueues(queue001(),queue002(),queue003(),queue_image(),queue_pdf());
+        simpleMessageListenerContainer.setConcurrentConsumers(1);
+        simpleMessageListenerContainer.setMaxConcurrentConsumers(5);
+        simpleMessageListenerContainer.setDefaultRequeueRejected(false);
+        simpleMessageListenerContainer.setAcknowledgeMode(AcknowledgeMode.AUTO);
+        simpleMessageListenerContainer.setExposeListenerChannel(true);
+        simpleMessageListenerContainer.setConsumerTagStrategy(new ConsumerTagStrategy() {
+            @Override
+            public String createConsumerTag(String s) {
+                return s + "_" + UUID.randomUUID().toString();
+            }
+        });
+        simpleMessageListenerContainer.setMessageListener(new MessageListener() {
+            @Override
+            public void onMessage(Message message) {
+                System.out.println("消费"+new String(message.getBody()));
+            }
+        });
+
+        return simpleMessageListenerContainer;
     }
 }
