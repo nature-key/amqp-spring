@@ -1,16 +1,22 @@
 package com.jiepi.amqpspring;
 
+import com.jiepi.amqpspring.adapter.MessageDelegate;
+import com.jiepi.amqpspring.adapter.TextMessageConverter;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
+import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.ConsumerTagStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
+import java.security.MessageDigest;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Configuration
@@ -116,13 +122,33 @@ public class RabbitmqConfig {
                 return s + "_" + UUID.randomUUID().toString();
             }
         });
-        simpleMessageListenerContainer.setMessageListener(new MessageListener() {
-            @Override
-            public void onMessage(Message message) {
-                System.out.println("消费"+new String(message.getBody()));
-            }
-        });
+//        simpleMessageListenerContainer.setMessageListener(new MessageListener() {
+//            @Override
+//            public void onMessage(Message message) {
+//                System.out.println("消费"+new String(message.getBody()));
+//            }
+//        });
+        /**
+         * 1 默认发放handlemessage
+         * 2.自定义consmermessage
+         * 3.字节数组转成字符串 setMessageConverter
+         */
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//        adapter.setMessageConverter(new TextMessageConverter());
+//        simpleMessageListenerContainer.setMessageListener(adapter);
 
+        /**
+         * 队列对应发放
+         */
+        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+        Map<String,String> map = new HashMap<>();
+        map.put("queue001","method1");
+        map.put("queue002","method2");
+        adapter.setQueueOrTagToMethodName(map);
+        adapter.setMessageConverter(new TextMessageConverter());
+        simpleMessageListenerContainer.setMessageListener(adapter);
         return simpleMessageListenerContainer;
+
     }
 }

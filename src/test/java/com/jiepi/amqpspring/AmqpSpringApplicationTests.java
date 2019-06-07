@@ -90,5 +90,25 @@ public class AmqpSpringApplicationTests {
         rabbitTemplate.convertAndSend("topic001", "spring.ab", "tipoc001_message_spring.ab");
         rabbitTemplate.convertAndSend("topic002", "rabbit.a", "tipoc001_message_rabbit");
     }
+    @Test
+    public void test3() {
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("text/plain");
+        messageProperties.getHeaders().put("test1", "test1");
+        messageProperties.getHeaders().put("test2", "test2");
+        Message message = new Message("HELLO WORD rabbit".getBytes(), messageProperties);
+        rabbitTemplate.send("topic002", "rabbit.r", message);
 
+    }
+    @Test
+    public void test4() {
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("text/plain");
+        messageProperties.getHeaders().put("test1", "test1");
+        messageProperties.getHeaders().put("test2", "test2");
+        Message message = new Message("HELLO WORD rabbit".getBytes(), messageProperties);
+        rabbitTemplate.send("topic002", "rabbit.r", message);
+        rabbitTemplate.send("topic001", "spring.r", message);
+
+    }
 }
