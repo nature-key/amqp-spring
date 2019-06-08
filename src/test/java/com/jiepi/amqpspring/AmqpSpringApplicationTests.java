@@ -1,5 +1,9 @@
 package com.jiepi.amqpspring;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jiepi.amqpspring.entity.Order;
+import com.jiepi.amqpspring.entity.Packaged;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.amqp.AmqpException;
@@ -109,6 +113,86 @@ public class AmqpSpringApplicationTests {
         Message message = new Message("HELLO WORD rabbit".getBytes(), messageProperties);
         rabbitTemplate.send("topic002", "rabbit.r", message);
         rabbitTemplate.send("topic001", "spring.r", message);
+    }
 
+    @Test
+    public void test5() throws JsonProcessingException {
+
+        Order order = new Order();
+        order.setId("001");
+        order.setName("test");
+        order.setContent("testtset");
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(order);
+        System.err.println("order 4 json: " + json);
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("application/json");
+        Message message = new Message(json.getBytes(), messageProperties);
+        rabbitTemplate.send("topic001", "spring.r", message);
+    }
+
+    /**
+     * java对象转
+     * @throws JsonProcessingException
+     */
+    @Test
+    public void test6() throws JsonProcessingException {
+
+        Order order = new Order();
+        order.setId("001");
+        order.setName("test");
+        order.setContent("testtset");
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(order);
+        System.err.println("order 4 json: " + json);
+
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("application/json");
+        messageProperties.getHeaders().put("__TypeId__","com.jiepi.amqpspring.entity.Order");
+        Message message = new Message(json.getBytes(), messageProperties);
+        rabbitTemplate.send("topic001", "spring.r", message);
+    }
+
+    /**
+     * 多个对象转化
+     * @throws JsonProcessingException
+     */
+    @Test
+    public void test7() throws JsonProcessingException {
+
+        Order order = new Order();
+        order.setId("001");
+        order.setName("test");
+        order.setContent("testtset");
+
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writeValueAsString(order);
+        System.err.println("order 4 json: " + json);
+
+        MessageProperties messageProperties = new MessageProperties();
+        messageProperties.setContentType("application/json");
+        messageProperties.getHeaders().put("__TypeId__","order");
+        Message message = new Message(json.getBytes(), messageProperties);
+        rabbitTemplate.send("topic001", "spring.r", message);
+
+
+
+
+        Packaged packaged = new Packaged();
+        packaged.setId("001");
+        packaged.setName("test");
+        packaged.setDescription("package");
+
+        ObjectMapper mapper1 = new ObjectMapper();
+        String json1 = mapper1.writeValueAsString(packaged);
+        System.err.println("order 4 json: " + json1);
+
+        MessageProperties messageProperties1= new MessageProperties();
+        messageProperties1.setContentType("application/json");
+        messageProperties1.getHeaders().put("__TypeId__","packaged");
+        Message message1 = new Message(json1.getBytes(), messageProperties1);
+        rabbitTemplate.send("topic001", "spring.r", message1);
     }
 }

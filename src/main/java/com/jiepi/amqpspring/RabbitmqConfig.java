@@ -2,6 +2,7 @@ package com.jiepi.amqpspring;
 
 import com.jiepi.amqpspring.adapter.MessageDelegate;
 import com.jiepi.amqpspring.adapter.TextMessageConverter;
+import com.jiepi.amqpspring.entity.Order;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -10,6 +11,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.ConsumerTagStrategy;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -141,13 +144,62 @@ public class RabbitmqConfig {
         /**
          * 队列对应发放
          */
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        Map<String,String> map = new HashMap<>();
+//        map.put("queue001","method1");
+//        map.put("queue002","method2");
+//        adapter.setQueueOrTagToMethodName(map);
+//        adapter.setMessageConverter(new TextMessageConverter());
+//        simpleMessageListenerContainer.setMessageListener(adapter);
+
+        /**
+         * json
+         */
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+//        adapter.setMessageConverter(jackson2JsonMessageConverter);
+//        simpleMessageListenerContainer.setMessageListener(adapter);
+
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//
+//        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+//        adapter.setMessageConverter(jackson2JsonMessageConverter);
+//
+//        simpleMessageListenerContainer.setMessageListener(adapter);
+
+        /**
+         *   支持java对象转换
+         */
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//
+//        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+//
+//        DefaultJackson2JavaTypeMapper jackson2JavaTypeMapper = new DefaultJackson2JavaTypeMapper();
+//        jackson2JsonMessageConverter.setJavaTypeMapper(jackson2JavaTypeMapper);
+//
+//        adapter.setMessageConverter(jackson2JsonMessageConverter);
+//
+//        simpleMessageListenerContainer.setMessageListener(adapter);
+
+
         MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
-        Map<String,String> map = new HashMap<>();
-        map.put("queue001","method1");
-        map.put("queue002","method2");
-        adapter.setQueueOrTagToMethodName(map);
-        adapter.setMessageConverter(new TextMessageConverter());
+        adapter.setDefaultListenerMethod("consumeMessage");
+        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+        DefaultJackson2JavaTypeMapper javaTypeMapper = new DefaultJackson2JavaTypeMapper();
+
+        Map<String, Class<?>> idClassMapping = new HashMap<String, Class<?>>();
+        idClassMapping.put("order", com.jiepi.amqpspring.entity.Order.class );
+        idClassMapping.put("packaged", com.jiepi.amqpspring.entity.Packaged.class);
+
+        javaTypeMapper.setIdClassMapping(idClassMapping);
+
+        jackson2JsonMessageConverter.setJavaTypeMapper(javaTypeMapper);
+        adapter.setMessageConverter(jackson2JsonMessageConverter);
         simpleMessageListenerContainer.setMessageListener(adapter);
+
         return simpleMessageListenerContainer;
 
     }
