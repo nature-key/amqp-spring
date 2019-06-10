@@ -5,6 +5,7 @@ package com.jiepi.amqpspring.adapter;
 import com.jiepi.amqpspring.entity.Order;
 import com.jiepi.amqpspring.entity.Packaged;
 
+import java.io.File;
 import java.util.Map;
 
 public class MessageDelegate {
@@ -49,7 +50,7 @@ public class MessageDelegate {
                 ", content: " + pack.getDescription());
     }
 //
-//    public void consumeMessage(File file) {
-//        System.err.println("文件对象 方法, 消息内容:" + file.getName());
-//    }
+    public void consumeMessage(File file) {
+        System.err.println("文件对象 方法, 消息内容:" + file.getName());
+    }
 }

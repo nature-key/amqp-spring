@@ -2,6 +2,8 @@ package com.jiepi.amqpspring;
 
 import com.jiepi.amqpspring.adapter.MessageDelegate;
 import com.jiepi.amqpspring.adapter.TextMessageConverter;
+import com.jiepi.amqpspring.convert.ImageMessageConverter;
+import com.jiepi.amqpspring.convert.PDFMessageConverter;
 import com.jiepi.amqpspring.entity.Order;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -11,6 +13,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 import org.springframework.amqp.support.ConsumerTagStrategy;
+import org.springframework.amqp.support.converter.ContentTypeDelegatingMessageConverter;
 import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -185,19 +188,48 @@ public class RabbitmqConfig {
 //        simpleMessageListenerContainer.setMessageListener(adapter);
 
 
+//        MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+//        adapter.setDefaultListenerMethod("consumeMessage");
+//        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
+//        DefaultJackson2JavaTypeMapper javaTypeMapper = new DefaultJackson2JavaTypeMapper();
+//
+//        Map<String, Class<?>> idClassMapping = new HashMap<String, Class<?>>();
+//        idClassMapping.put("order", com.jiepi.amqpspring.entity.Order.class );
+//        idClassMapping.put("packaged", com.jiepi.amqpspring.entity.Packaged.class);
+//
+//        javaTypeMapper.setIdClassMapping(idClassMapping);
+//
+//        jackson2JsonMessageConverter.setJavaTypeMapper(javaTypeMapper);
+//        adapter.setMessageConverter(jackson2JsonMessageConverter);
+//        simpleMessageListenerContainer.setMessageListener(adapter);
+
+
         MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
         adapter.setDefaultListenerMethod("consumeMessage");
-        Jackson2JsonMessageConverter jackson2JsonMessageConverter = new Jackson2JsonMessageConverter();
-        DefaultJackson2JavaTypeMapper javaTypeMapper = new DefaultJackson2JavaTypeMapper();
 
-        Map<String, Class<?>> idClassMapping = new HashMap<String, Class<?>>();
-        idClassMapping.put("order", com.jiepi.amqpspring.entity.Order.class );
-        idClassMapping.put("packaged", com.jiepi.amqpspring.entity.Packaged.class);
+        //全局转换器
+        ContentTypeDelegatingMessageConverter convert = new ContentTypeDelegatingMessageConverter();
 
-        javaTypeMapper.setIdClassMapping(idClassMapping);
+        TextMessageConverter textConvert = new TextMessageConverter();
+        convert.addDelegate("text", textConvert);
+        convert.addDelegate("html/text", textConvert);
+        convert.addDelegate("xml/text", textConvert);
+        convert.addDelegate("text/plain", textConvert);
 
-        jackson2JsonMessageConverter.setJavaTypeMapper(javaTypeMapper);
-        adapter.setMessageConverter(jackson2JsonMessageConverter);
+        Jackson2JsonMessageConverter jsonConvert = new Jackson2JsonMessageConverter();
+        convert.addDelegate("json", jsonConvert);
+        convert.addDelegate("application/json", jsonConvert);
+
+        ImageMessageConverter imageConverter = new ImageMessageConverter();
+        convert.addDelegate("image/png", imageConverter);
+        convert.addDelegate("image", imageConverter);
+        convert.addDelegate("image/jpeg", imageConverter);
+        convert.addDelegate("image", imageConverter);
+
+        PDFMessageConverter pdfConverter = new PDFMessageConverter();
+        convert.addDelegate("application/pdf", pdfConverter);
+
+        adapter.setMessageConverter(convert);
         simpleMessageListenerContainer.setMessageListener(adapter);
 
         return simpleMessageListenerContainer;

@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 
 @RunWith(SpringRunner.class)
@@ -194,5 +196,21 @@ public class AmqpSpringApplicationTests {
         messageProperties1.getHeaders().put("__TypeId__","packaged");
         Message message1 = new Message(json1.getBytes(), messageProperties1);
         rabbitTemplate.send("topic001", "spring.r", message1);
+    }
+
+    @Test
+    public void testSendExtConverterMessage() throws Exception {
+			byte[] body = Files.readAllBytes(Paths.get("/Users/wangxuan/Downloads", "u=717309347,2746831562&fm=179&app=42&f=JPG.jpeg"));
+			MessageProperties messageProperties = new MessageProperties();
+			messageProperties.setContentType("image/jpeg");
+			messageProperties.getHeaders().put("extName", "jpeg");
+			Message message = new Message(body, messageProperties);
+			rabbitTemplate.send("", "image_queue", message);
+
+//        byte[] body = Files.readAllBytes(Paths.get("/Users/wangxuan/Downloads", "u=717309347,2746831562&fm=179&app=42&f=JPG-已转档.pdf"));
+//        MessageProperties messageProperties = new MessageProperties();
+//        messageProperties.setContentType("application/pdf");
+//        Message message = new Message(body, messageProperties);
+//        rabbitTemplate.send("", "pdf_queue", message);
     }
 }
